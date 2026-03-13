@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lumina — Gallery</title>
+<link rel="stylesheet" href="/css/theme.css">
+<style>
+.gallery-hero { padding:130px 48px 60px; text-align:center; }
+.gallery-hero h1 { font-family:'Playfair Display',serif; font-size:clamp(2.5rem,6vw,5rem); font-weight:900; line-height:1; margin-bottom:14px; }
+.gallery-hero h1 em { font-style:italic; background:linear-gradient(135deg,var(--gold-bright),var(--gold-warm)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.gallery-hero p { font-size:1.1rem; font-style:italic; color:var(--text-muted); max-width:480px; margin:0 auto; }
+
+.gallery-wrap { padding:0 40px 80px; }
+.gallery-controls { display:flex; gap:16px; align-items:center; margin-bottom:32px; flex-wrap:wrap; }
+.search-box {
+  display:flex; align-items:center; gap:10px;
+  background:rgba(10,22,40,.7); border:1px solid var(--glass-light);
+  border-radius:var(--radius-sm); padding:9px 16px; flex:1; max-width:320px;
+  transition:border-color .3s;
+}
+.search-box:focus-within { border-color:var(--gold-bright); }
+.search-box input { background:none; border:none; color:var(--text-primary); font-family:'Cormorant Garamond',serif; font-size:1rem; outline:none; flex:1; }
+.search-box input::placeholder { color:var(--text-muted); }
+.filters-row { display:flex; gap:7px; flex-wrap:wrap; }
+.flt { background:var(--glass-bg); border:1px solid var(--glass-light); color:var(--text-muted); padding:7px 16px; border-radius:20px; font-family:'Space Mono',monospace; font-size:.6rem; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; backdrop-filter:blur(10px); transition:all .3s; }
+.flt.active,.flt:hover { border-color:var(--gold-bright); color:var(--gold-bright); background:rgba(245,200,66,.08); }
+.sort-select { background:rgba(10,22,40,.7); border:1px solid var(--glass-light); color:var(--text-muted); padding:7px 12px; border-radius:var(--radius-sm); font-family:'Space Mono',monospace; font-size:.62rem; cursor:pointer; outline:none; margin-left:auto; }
+
+.masonry { columns:4; column-gap:14px; }
+.m-item { break-inside:avoid; margin-bottom:14px; border-radius:10px; overflow:hidden; position:relative; cursor:pointer; border:1px solid var(--glass-light); transition:transform .35s,box-shadow .35s; }
+.m-item:hover { transform:translateY(-4px); box-shadow:0 14px 40px rgba(0,0,0,.5),0 0 18px var(--gold-glow); border-color:rgba(245,200,66,.3); }
+.m-info { position:absolute; bottom:0; left:0; right:0; padding:36px 12px 12px; background:linear-gradient(to top,rgba(3,11,26,.9),transparent); opacity:0; transform:translateY(4px); transition:all .3s; }
+.m-item:hover .m-info { opacity:1; transform:translateY(0); }
+.m-name { font-family:'Playfair Display',serif; font-size:.92rem; font-weight:700; }
+.m-author { font-family:'Space Mono',monospace; font-size:.55rem; color:var(--text-muted); margin-top:2px; }
+.m-likes { position:absolute; top:10px; right:10px; background:rgba(3,11,26,.6); border:1px solid var(--glass-light); border-radius:20px; padding:3px 10px; font-family:'Space Mono',monospace; font-size:.58rem; backdrop-filter:blur(8px); }
+
+.load-more { text-align:center; margin-top:40px; }
+.empty-state { text-align:center; padding:80px 40px; color:var(--text-muted); }
+.empty-state .icon { font-size:3rem; margin-bottom:16px; }
+
+/* Lightbox */
+.lb { position:fixed; inset:0; z-index:200; background:rgba(3,11,26,.95); backdrop-filter:blur(18px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .3s; }
+.lb.open { opacity:1; pointer-events:all; }
+.lb-inner { max-width:900px; width:92%; display:grid; grid-template-columns:1.3fr 1fr; background:var(--card-bg); border-radius:var(--radius); overflow:hidden; border:1px solid var(--glass-border); transform:scale(.93); transition:transform .3s; }
+.lb.open .lb-inner { transform:scale(1); }
+.lb-img { min-height:420px; overflow:hidden; }
+.lb-img img, .lb-img svg { width:100%; height:100%; object-fit:cover; display:block; }
+.lb-details { padding:32px 26px; display:flex; flex-direction:column; overflow-y:auto; max-height:80vh; }
+.lb-cat { font-family:'Space Mono',monospace; font-size:.56rem; letter-spacing:.22em; text-transform:uppercase; color:var(--gold-bright); margin-bottom:8px; }
+.lb-title { font-family:'Playfair Display',serif; font-size:1.7rem; font-weight:900; line-height:1.1; margin-bottom:10px; }
+.lb-tags { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:12px; }
+.lb-desc { font-size:.97rem; line-height:1.7; color:var(--text-muted); flex:1; }
+.lb-meta { margin-top:16px; padding-top:14px; border-top:1px solid rgba(255,255,255,.07); }
+.lb-author-name { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; }
+.lb-author-sub { font-size:.78rem; color:var(--text-muted); }
+.lb-actions { display:flex; align-items:center; gap:10px; margin-top:14px; }
+.lb-close { position:absolute; top:18px; right:18px; background:var(--glass-bg); border:1px solid var(--glass-light); color:var(--text-primary); width:38px; height:38px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .3s; font-size:1rem; }
+.lb-close:hover { border-color:var(--gold-bright); color:var(--gold-bright); }
+.comments-area { margin-top:14px; }
+.comments-area h4 { font-family:'Space Mono',monospace; font-size:.6rem; letter-spacing:.2em; text-transform:uppercase; color:var(--gold-warm); margin-bottom:8px; }
+.comments-list { max-height:100px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-bottom:8px; }
+.comment-item { background:rgba(255,255,255,.04); border-radius:6px; padding:6px 10px; font-size:.83rem; }
+.comment-author { font-weight:700; color:var(--gold-warm); font-size:.72rem; }
+.comment-input-row { display:flex; gap:8px; }
+.comment-input-row input { flex:1; background:rgba(10,22,40,.7); border:1px solid var(--glass-light); color:var(--text-primary); padding:7px 11px; border-radius:6px; font-family:inherit; font-size:.88rem; outline:none; }
+.comment-input-row input:focus { border-color:var(--gold-bright); }
+
+@media(max-width:1100px){.masonry{columns:3}}
+@media(max-width:768px){.masonry{columns:2}.gallery-wrap{padding:0 16px 60px}.gallery-hero{padding:110px 24px 40px}.lb-inner{grid-template-columns:1fr}.lb-img{min-height:220px}}
+@media(max-width:480px){.masonry{columns:1}}
+</style>
+</head>
+<body>
+<div id="sky"></div>
+
+<!-- Lightbox -->
+<div class="lb" id="lb">
+  <div class="lb-inner">
+    <div class="lb-img" id="lbImg"></div>
+    <div class="lb-details">
+      <div class="lb-cat" id="lbCat"></div>
+      <div class="lb-title" id="lbTitle"></div>
+      <div class="lb-tags" id="lbTags"></div>
+      <div class="lb-desc" id="lbDesc"></div>
+      <div class="lb-meta">
+        <div class="lb-author-name" id="lbAuthor"></div>
+        <div class="lb-author-sub" id="lbAuthorSub"></div>
+      </div>
+      <div class="lb-actions">
+        <button class="btn btn-ghost btn-sm" id="lbLikeBtn" onclick="toggleLike()">♡ Like</button>
+        <span id="lbLikes" style="font-family:'Space Mono',monospace;font-size:.68rem;color:var(--text-muted)"></span>
+      </div>
+      <div class="comments-area">
+        <h4>Comments</h4>
+        <div class="comments-list" id="commentsList"></div>
+        <div class="comment-input-row" id="commentRow" style="display:none">
+          <input type="text" id="commentInput" placeholder="Add a comment…">
+          <button class="btn btn-gold btn-sm" onclick="postComment()">Post</button>
+        </div>
+        <div id="commentLogin" style="display:none;font-size:.8rem;color:var(--text-muted)">
+          <a href="/auth" style="color:var(--gold-bright)">Log in</a> to comment
+        </div>
+      </div>
+    </div>
+  </div>
+  <button class="lb-close" onclick="closeLb()">✕</button>
+</div>
+
+<div class="page">
+  <nav>
+    <a href="/" class="nav-logo">Lumina<small>University Multimedia Exhibition 2025</small></a>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/gallery" class="active">Gallery</a></li>
+      <li><a href="/#artists">Artists</a></li>
+      <li><a href="/#schedule">Events</a></li>
+    </ul>
+    <div class="nav-right" id="navRight"></div>
+  </nav>
+
+  <div class="gallery-hero">
+    <h1>The <em>Gallery</em></h1>
+    <p>Discover extraordinary works by the creative minds of our university's arts programs.</p>
+  </div>
+
+  <div class="gallery-wrap">
+    <div class="gallery-controls">
+      <div class="search-box">
+        <span style="color:var(--text-muted)">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search works, artists…" oninput="onSearch()">
+      </div>
+      <div class="filters-row" id="catFilters"></div>
+      <select class="sort-select" id="sortSelect" onchange="onSort()">
+        <option value="newest">Newest First</option>
+        <option value="popular">Most Liked</option>
+      </select>
+    </div>
+    <div class="masonry" id="grid"></div>
+    <div class="load-more" id="loadMore" style="display:none">
+      <button class="btn btn-ghost" onclick="loadMoreWorks()">Load More Works</button>
+    </div>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div class="icon">🎨</div>
+      <p>No works found for this filter.</p>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+const CATS = ['all','digital','photography','3d','illustration','video','interactive'];
+let page=1, loading=false, hasMore=true, currentCat='all', currentSearch='', currentSort='newest';
+let lbArtwork = null;
+const HEIGHTS = [180,240,200,160,280,220,190,250,170,230,200,260];
+
+// Filters
+const catFilter = document.getElementById('catFilters');
+CATS.forEach(c => {
+  const btn = document.createElement('button');
+  btn.className='flt'+(c==='all'?' active':'');
+  btn.textContent = c==='all'?'All':c.charAt(0).toUpperCase()+c.slice(1);
+  btn.onclick = () => { currentCat=c; page=1; hasMore=true; document.querySelectorAll('.flt').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); document.getElementById('grid').innerHTML=''; fetchWorks(); };
+  catFilter.appendChild(btn);
+});
+
+let searchTimer;
+function onSearch() { clearTimeout(searchTimer); searchTimer=setTimeout(()=>{ currentSearch=document.getElementById('searchInput').value.trim(); page=1; hasMore=true; document.getElementById('grid').innerHTML=''; fetchWorks(); },350); }
+function onSort() { currentSort=document.getElementById('sortSelect').value; page=1; hasMore=true; document.getElementById('grid').innerHTML=''; fetchWorks(); }
+
+async function fetchWorks() {
+  if (loading || !hasMore) return;
+  loading=true;
+  const params = new URLSearchParams({ limit:16, page, ...(currentCat!=='all'?{category:currentCat}:{}), ...(currentSearch?{search:currentSearch}:{}) });
+  try {
+    let works = await apiFetch('/api/artworks?'+params);
+    if (works.length < 16) { hasMore=false; document.getElementById('loadMore').style.display='none'; }
+    else document.getElementById('loadMore').style.display='block';
+    if (currentSort==='popular') works = works.sort((a,b)=>(b.likes||0)-(a.likes||0));
+    const grid = document.getElementById('grid');
+    document.getElementById('emptyState').style.display = (works.length===0&&page===1)?'block':'none';
+    works.forEach((w,i) => {
+      const item = document.createElement('div');
+      item.className='reveal m-item';
+      item.innerHTML = w.image_url
+        ? `<img src="${w.image_url}" style="width:100%;max-height:280px;object-fit:cover;display:block">`
+        : artSVG(w.id,300,HEIGHTS[(i+(page-1)*16)%HEIGHTS.length]);
+      item.innerHTML += `
+        <div class="m-info"><div class="m-name">${w.title}</div><div class="m-author">${w.author?.name||''}</div></div>
+        <div class="m-likes">♥ ${w.likes||0}</div>`;
+      item.addEventListener('click', ()=>openLb(w));
+      grid.appendChild(item);
+    });
+    page++;
+    initReveal();
+  } catch(e){ console.error(e); }
+  loading=false;
+}
+
+function loadMoreWorks() { fetchWorks(); }
+
+// Lightbox
+async function openLb(a) {
+  lbArtwork = a;
+  document.getElementById('lbCat').textContent = a.category;
+  document.getElementById('lbTitle').textContent = a.title;
+  document.getElementById('lbDesc').textContent = a.description||'';
+  document.getElementById('lbTags').innerHTML = (a.tags||[]).map(t=>`<span class="badge badge-gold">${t}</span>`).join('');
+  document.getElementById('lbAuthor').textContent = a.author?.name||'Unknown';
+  document.getElementById('lbAuthorSub').textContent = (a.author?.major||'')+(a.author?.year?' · '+a.author.year:'');
+  document.getElementById('lbLikes').textContent = (a.likes||0)+' likes';
+  const imgWrap = document.getElementById('lbImg');
+  imgWrap.innerHTML = a.image_url ? `<img src="${a.image_url}" alt="${a.title}" style="width:100%;min-height:420px;object-fit:cover">` : artSVG(a.id,500,500);
+  document.getElementById('commentRow').style.display = isLoggedIn()?'flex':'none';
+  document.getElementById('commentLogin').style.display = isLoggedIn()?'none':'block';
+  document.getElementById('lb').classList.add('open');
+  loadComments(a.uuid);
+}
+function closeLb() { document.getElementById('lb').classList.remove('open'); lbArtwork=null; }
+document.getElementById('lb').addEventListener('click',e=>{ if(e.target===document.getElementById('lb')) closeLb(); });
+
+async function toggleLike() {
+  if (!isLoggedIn()) { location.href='/auth'; return; }
+  if (!lbArtwork) return;
+  try {
+    const res = await apiFetch('/api/artworks/'+lbArtwork.uuid+'/like',{method:'POST'});
+    document.getElementById('lbLikeBtn').textContent = (res.liked?'♥':'♡')+' Like';
+    document.getElementById('lbLikes').textContent = res.likes+' likes';
+  } catch(e){ toast(e.message,'error'); }
+}
+
+async function loadComments(uuid) {
+  const list = document.getElementById('commentsList');
+  try {
+    const c = await apiFetch('/api/artworks/'+uuid+'/comments');
+    list.innerHTML = c.length ? c.map(x=>`<div class="comment-item"><span class="comment-author">${x.name}:</span> ${x.content}</div>`).join('') : '<p style="font-size:.8rem;color:var(--text-muted);font-style:italic">No comments yet.</p>';
+  } catch{}
+}
+async function postComment() {
+  if (!lbArtwork) return;
+  const input = document.getElementById('commentInput');
+  if (!input.value.trim()) return;
+  try {
+    await apiFetch('/api/artworks/'+lbArtwork.uuid+'/comments',{method:'POST',body:JSON.stringify({content:input.value.trim()})});
+    input.value=''; loadComments(lbArtwork.uuid);
+  } catch(e){ toast(e.message,'error'); }
+}
+
+fetchWorks();
+</script>
+</body>
+</html>

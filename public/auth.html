@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lumina — Sign In</title>
+<link rel="stylesheet" href="/css/theme.css">
+<style>
+.auth-wrap {
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  padding:100px 20px 60px;
+}
+.auth-card {
+  width:100%; max-width:480px;
+  background:rgba(8,18,38,.7); border:1px solid var(--glass-border);
+  border-radius:20px; backdrop-filter:blur(24px);
+  padding:48px 40px;
+  box-shadow:0 0 60px rgba(0,0,0,.5),0 0 40px rgba(245,200,66,.06);
+  position:relative;
+}
+.auth-logo-area {
+  text-align:center; margin-bottom:36px;
+}
+.auth-icon {
+  width:64px; height:64px; border-radius:50%;
+  border:1.5px solid var(--glass-border);
+  background:var(--glass-bg); backdrop-filter:blur(10px);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.6rem; margin:0 auto 16px;
+}
+.auth-logo {
+  font-family:'Playfair Display',serif; font-size:2rem; font-weight:900; font-style:italic;
+  background:linear-gradient(135deg,var(--gold-bright),var(--gold-warm));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.auth-subtitle { font-size:1rem; color:var(--text-muted); font-style:italic; margin-top:6px; }
+.tabs { display:flex; gap:0; margin-bottom:32px; background:rgba(255,255,255,.04); border-radius:10px; padding:4px; }
+.tab {
+  flex:1; padding:10px; text-align:center;
+  font-family:'Space Mono',monospace; font-size:.65rem; letter-spacing:.12em; text-transform:uppercase;
+  cursor:pointer; border-radius:8px; transition:all .3s; color:var(--text-muted); border:none; background:none;
+}
+.tab.active { background:linear-gradient(135deg,var(--gold-bright),var(--gold-warm)); color:var(--night-deep); font-weight:700; }
+.form-wrap { display:flex; flex-direction:column; gap:18px; }
+.auth-footer { text-align:center; margin-top:24px; font-size:.88rem; color:var(--text-muted); }
+.auth-footer a { color:var(--gold-bright); text-decoration:none; }
+.divider-line { display:flex; align-items:center; gap:12px; margin:8px 0; }
+.divider-line span { flex:1; height:1px; background:rgba(255,255,255,.08); }
+.divider-line p { font-family:'Space Mono',monospace; font-size:.58rem; letter-spacing:.15em; color:var(--text-muted); }
+.lang-row { position:absolute; top:20px; right:20px; }
+.lang-select { background:var(--glass-bg); border:1px solid var(--glass-border); color:var(--text-primary); padding:5px 10px; border-radius:18px; font-family:'Space Mono',monospace; font-size:.62rem; cursor:pointer; }
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.error-msg { color:var(--danger); font-size:.8rem; font-family:'Space Mono',monospace; letter-spacing:.05em; display:none; }
+.error-msg.show { display:block; }
+.submit-btn { width:100%; padding:14px; font-size:.75rem; margin-top:4px; }
+</style>
+</head>
+<body>
+<div id="sky"></div>
+
+<div class="page">
+  <nav>
+    <a href="/" class="nav-logo">Lumina<small>University Multimedia Exhibition 2025</small></a>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/gallery">Gallery</a></li>
+    </ul>
+    <div class="nav-right" id="navRight"></div>
+  </nav>
+
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="lang-row">
+        <select class="lang-select"><option>EN</option><option>KZ</option><option>RU</option></select>
+      </div>
+      <div class="auth-logo-area">
+        <div class="auth-icon">🎨</div>
+        <div class="auth-logo">Lumina</div>
+        <div class="auth-subtitle">University Multimedia Exhibition</div>
+      </div>
+      <div class="tabs">
+        <button class="tab active" id="tabLogin" onclick="switchTab('login')">Login</button>
+        <button class="tab" id="tabRegister" onclick="switchTab('register')">Sign Up</button>
+      </div>
+      <div id="errorMsg" class="error-msg"></div>
+
+      <!-- Login form -->
+      <div id="loginForm" class="form-wrap">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input class="form-input" type="email" id="loginEmail" placeholder="your@university.edu" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button class="btn btn-gold submit-btn" onclick="doLogin()">Sign In →</button>
+        <div class="divider-line"><span></span><p>or</p><span></span></div>
+        <button class="btn btn-ghost submit-btn" onclick="switchTab('register')">Create Account</button>
+      </div>
+
+      <!-- Register form -->
+      <div id="registerForm" class="form-wrap" style="display:none">
+        <div class="field-row">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input class="form-input" type="text" id="regName" placeholder="Your Name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Year</label>
+            <select class="form-select" id="regYear">
+              <option value="">Select Year</option>
+              <option value="1st Year">1st Year</option>
+              <option value="2nd Year">2nd Year</option>
+              <option value="3rd Year">3rd Year</option>
+              <option value="4th Year">4th Year</option>
+              <option value="Master">Master</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Major / Specialization</label>
+          <select class="form-select" id="regMajor">
+            <option value="">Select Major</option>
+            <option>Digital Art</option>
+            <option>Photography</option>
+            <option>3D & Motion Graphics</option>
+            <option>Illustration</option>
+            <option>Video & Film</option>
+            <option>Interactive Media</option>
+            <option>Graphic Design</option>
+            <option>Animation</option>
+            <option>Sound Design</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input class="form-input" type="email" id="regEmail" placeholder="your@university.edu">
+        </div>
+        <div class="field-row">
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input class="form-input" type="password" id="regPass" placeholder="Min. 6 chars">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm</label>
+            <input class="form-input" type="password" id="regPass2" placeholder="Repeat">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Short Bio (optional)</label>
+          <textarea class="form-textarea" id="regBio" placeholder="Tell us about yourself and your art…" style="min-height:70px"></textarea>
+        </div>
+        <button class="btn btn-gold submit-btn" onclick="doRegister()">Create Account →</button>
+        <div class="divider-line"><span></span><p>or</p><span></span></div>
+        <button class="btn btn-ghost submit-btn" onclick="switchTab('login')">Already have an account</button>
+      </div>
+
+      <div class="auth-footer">
+        <a href="/">← Back to Exhibition</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+// Redirect if already logged in
+if (isLoggedIn()) location.href = '/dashboard';
+
+// Check URL param
+const urlMode = new URLSearchParams(location.search).get('mode');
+if (urlMode === 'register') switchTab('register');
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg; el.classList.add('show');
+}
+function hideError() { document.getElementById('errorMsg').classList.remove('show'); }
+
+function switchTab(tab) {
+  document.getElementById('loginForm').style.display = tab==='login'?'flex':'none';
+  document.getElementById('registerForm').style.display = tab==='register'?'flex':'none';
+  document.getElementById('tabLogin').classList.toggle('active', tab==='login');
+  document.getElementById('tabRegister').classList.toggle('active', tab==='register');
+  hideError();
+}
+
+async function doLogin() {
+  hideError();
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPass').value;
+  if (!email || !password) { showError('Please fill in all fields'); return; }
+  try {
+    const res = await apiFetch('/api/auth/login', { method:'POST', body:JSON.stringify({email,password}) });
+    setAuth(res.token, res.user);
+    toast('Welcome back, ' + res.user.name + '!', 'success');
+    setTimeout(() => location.href = res.user.role==='admin' ? '/admin' : '/dashboard', 800);
+  } catch(e) { showError(e.message); }
+}
+
+async function doRegister() {
+  hideError();
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPass').value;
+  const pass2 = document.getElementById('regPass2').value;
+  const major = document.getElementById('regMajor').value;
+  const year = document.getElementById('regYear').value;
+  const bio = document.getElementById('regBio').value.trim();
+  if (!name || !email || !password) { showError('Name, email and password are required'); return; }
+  if (password !== pass2) { showError('Passwords do not match'); return; }
+  if (password.length < 6) { showError('Password must be at least 6 characters'); return; }
+  try {
+    const res = await apiFetch('/api/auth/register', { method:'POST', body:JSON.stringify({name,email,password,major,year,bio}) });
+    setAuth(res.token, res.user);
+    toast('Welcome to Lumina, ' + res.user.name + '!', 'success');
+    setTimeout(() => location.href = '/dashboard', 800);
+  } catch(e) { showError(e.message); }
+}
+
+// Enter key support
+document.addEventListener('keydown', e => {
+  if (e.key==='Enter') {
+    if (document.getElementById('loginForm').style.display!=='none') doLogin();
+    else doRegister();
+  }
+});
+</script>
+</body>
+</html>

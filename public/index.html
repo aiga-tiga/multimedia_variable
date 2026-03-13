@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lumina — University Multimedia Exhibition</title>
+<link rel="stylesheet" href="/css/theme.css">
+<style>
+/* Hero */
+.hero {
+  min-height:100vh; display:flex; flex-direction:column;
+  justify-content:center; align-items:center; text-align:center;
+  padding:130px 48px 80px; position:relative;
+}
+.hero-eyebrow {
+  font-family:'Space Mono',monospace; font-size:.68rem;
+  letter-spacing:.35em; text-transform:uppercase;
+  color:var(--gold-bright); margin-bottom:22px;
+  opacity:0; animation:fadeUp .8s .3s ease forwards;
+}
+.hero-title {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(3.5rem,9vw,8rem); font-weight:900; line-height:.95;
+  opacity:0; animation:fadeUp .9s .5s ease forwards;
+}
+.hero-title em {
+  font-style:italic;
+  background:linear-gradient(135deg,var(--gold-bright) 0%,#fff5c0 50%,var(--gold-warm) 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 30px rgba(245,200,66,.4));
+}
+.hero-sub {
+  font-size:1.3rem; font-style:italic; color:var(--text-muted);
+  margin-top:26px; max-width:500px; line-height:1.6;
+  opacity:0; animation:fadeUp .9s .7s ease forwards;
+}
+.hero-btns {
+  display:flex; gap:14px; margin-top:42px; flex-wrap:wrap; justify-content:center;
+  opacity:0; animation:fadeUp .9s .9s ease forwards;
+}
+.hero-stats {
+  display:flex; gap:60px; margin-top:80px;
+  opacity:0; animation:fadeUp .9s 1.1s ease forwards;
+}
+.stat-num { font-family:'Playfair Display',serif; font-size:2.8rem; font-weight:900; color:var(--gold-bright); line-height:1; }
+.stat-label { font-family:'Space Mono',monospace; font-size:.6rem; letter-spacing:.2em; text-transform:uppercase; color:var(--text-muted); margin-top:5px; }
+.scroll-arrow {
+  position:absolute; bottom:36px; left:50%; transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  opacity:0; animation:fadeIn 1s 1.5s ease forwards;
+  cursor:pointer;
+}
+.scroll-arrow span { font-family:'Space Mono',monospace; font-size:.55rem; letter-spacing:.25em; text-transform:uppercase; color:var(--text-muted); }
+.scroll-line { width:1px; height:50px; background:linear-gradient(to bottom,var(--gold-bright),transparent); animation:scrollP 2s ease-in-out infinite; }
+@keyframes scrollP { 0%,100%{opacity:.3} 50%{opacity:1} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeIn  { from{opacity:0} to{opacity:1} }
+
+/* Featured */
+.featured-grid {
+  display:grid; grid-template-columns:1.6fr 1fr; grid-template-rows:auto auto; gap:18px;
+}
+.art-card {
+  position:relative; overflow:hidden; border-radius:12px;
+  border:1px solid var(--glass-light); background:var(--card-bg); cursor:pointer;
+  transition:transform .4s cubic-bezier(.25,.8,.25,1),box-shadow .4s;
+}
+.art-card:hover { transform:translateY(-6px) scale(1.01); box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 30px var(--gold-glow); border-color:var(--glass-border); }
+.art-card.large { grid-row:1/3; }
+.art-thumb-wrap { width:100%; overflow:hidden; }
+.art-thumb-wrap.large { min-height:500px; }
+.art-thumb-wrap.small { min-height:238px; }
+.art-overlay {
+  position:absolute; inset:0;
+  background:linear-gradient(to top,rgba(3,11,26,.92) 0%,rgba(3,11,26,.15) 50%,transparent);
+  display:flex; flex-direction:column; justify-content:flex-end; padding:24px;
+}
+.art-cat { font-family:'Space Mono',monospace; font-size:.55rem; letter-spacing:.25em; text-transform:uppercase; color:var(--gold-bright); margin-bottom:6px; }
+.art-title { font-family:'Playfair Display',serif; font-size:1.35rem; font-weight:700; margin-bottom:8px; }
+.art-card.large .art-title { font-size:1.9rem; }
+.art-author { font-size:.9rem; color:var(--text-muted); display:flex; align-items:center; gap:8px; }
+.like-pill {
+  position:absolute; top:14px; right:14px;
+  background:rgba(3,11,26,.65); border:1px solid var(--glass-light);
+  border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center;
+  backdrop-filter:blur(10px); cursor:pointer; transition:all .3s; font-size:.95rem;
+}
+.like-pill:hover,.like-pill.liked { color:#f87171; border-color:rgba(248,113,113,.4); }
+
+/* Masonry */
+.masonry { columns:4; column-gap:14px; }
+.m-item {
+  break-inside:avoid; margin-bottom:14px; border-radius:10px; overflow:hidden;
+  position:relative; cursor:pointer; border:1px solid var(--glass-light);
+  transition:transform .35s,box-shadow .35s;
+}
+.m-item:hover { transform:translateY(-4px); box-shadow:0 14px 40px rgba(0,0,0,.5),0 0 18px var(--gold-glow); border-color:rgba(245,200,66,.3); }
+.m-info {
+  position:absolute; bottom:0; left:0; right:0; padding:36px 12px 12px;
+  background:linear-gradient(to top,rgba(3,11,26,.9),transparent);
+  opacity:0; transform:translateY(4px); transition:all .3s;
+}
+.m-item:hover .m-info { opacity:1; transform:translateY(0); }
+.m-name { font-family:'Playfair Display',serif; font-size:.92rem; font-weight:700; }
+.m-author { font-family:'Space Mono',monospace; font-size:.56rem; color:var(--text-muted); margin-top:3px; }
+
+/* Artists */
+.artists-row { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
+.artist-card {
+  background:var(--card-bg); border:1px solid var(--glass-light);
+  border-radius:var(--radius); padding:26px 20px; text-align:center;
+  backdrop-filter:blur(16px); cursor:pointer;
+  transition:all .4s;
+}
+.artist-card:hover { border-color:var(--glass-border); transform:translateY(-5px); box-shadow:0 18px 45px rgba(0,0,0,.4),0 0 18px var(--gold-glow); }
+.a-ring { width:88px; height:88px; border-radius:50%; margin:0 auto 16px; position:relative; }
+.a-ring::before {
+  content:''; position:absolute; inset:-3px; border-radius:50%;
+  background:conic-gradient(var(--gold-bright),var(--gold-warm),#fff8,var(--gold-bright));
+  animation:spin 4s linear infinite; z-index:-1;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+.a-img { width:100%; height:100%; border-radius:50%; display:block; object-fit:cover; border:2px solid var(--night-deep); }
+.a-name { font-family:'Playfair Display',serif; font-size:1.05rem; font-weight:700; }
+.a-major { font-family:'Space Mono',monospace; font-size:.58rem; letter-spacing:.15em; text-transform:uppercase; color:var(--gold-warm); margin:4px 0 12px; }
+.a-count { font-size:.9rem; color:var(--text-muted); }
+.a-tags { display:flex; flex-wrap:wrap; gap:5px; justify-content:center; margin-top:12px; }
+
+/* Schedule */
+.sched-grid { display:grid; grid-template-columns:1fr 1fr; gap:50px; align-items:start; }
+.event-row {
+  display:flex; gap:20px; padding:20px 0;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  transition:all .3s; cursor:pointer;
+}
+.event-row:hover { padding-left:10px; }
+.event-date-box {
+  min-width:58px; text-align:center; padding:9px 10px;
+  background:rgba(245,200,66,.07); border:1px solid rgba(245,200,66,.2);
+  border-radius:10px;
+}
+.e-day { font-family:'Playfair Display',serif; font-size:1.75rem; font-weight:900; color:var(--gold-bright); line-height:1; }
+.e-mon { font-family:'Space Mono',monospace; font-size:.52rem; letter-spacing:.18em; text-transform:uppercase; color:var(--text-muted); margin-top:3px; }
+.e-type { font-family:'Space Mono',monospace; font-size:.56rem; letter-spacing:.18em; text-transform:uppercase; color:var(--gold-warm); margin-bottom:5px; }
+.e-title { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:700; margin-bottom:5px; transition:color .3s; }
+.event-row:hover .e-title { color:var(--gold-bright); }
+.e-time { font-size:.85rem; color:var(--text-muted); }
+.sched-visual { border-radius:18px; overflow:hidden; border:1px solid var(--glass-border); box-shadow:0 0 50px var(--gold-glow); }
+
+/* Filters */
+.filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:40px; }
+.flt {
+  background:var(--glass-bg); border:1px solid var(--glass-light);
+  color:var(--text-muted); padding:7px 18px; border-radius:24px;
+  font-family:'Space Mono',monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase;
+  cursor:pointer; backdrop-filter:blur(10px); transition:all .3s;
+}
+.flt.active,.flt:hover { border-color:var(--gold-bright); color:var(--gold-bright); background:rgba(245,200,66,.08); }
+
+/* CTA banner */
+.cta-band { padding:80px 48px; text-align:center; position:relative; overflow:hidden; }
+.cta-band::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at center,rgba(245,200,66,.1) 0%,transparent 65%); }
+.cta-band h2 { font-family:'Playfair Display',serif; font-size:clamp(2rem,5vw,3.8rem); font-weight:900; margin-bottom:18px; }
+.cta-band p { font-size:1.15rem; font-style:italic; color:var(--text-muted); max-width:480px; margin:0 auto 34px; line-height:1.6; }
+.cta-row { display:flex; gap:14px; justify-content:center; }
+
+/* Footer */
+footer { background:rgba(3,11,26,.9); border-top:1px solid var(--glass-light); padding:56px 48px 36px; }
+.footer-grid { display:grid; grid-template-columns:1.5fr 1fr 1fr 1fr; gap:44px; margin-bottom:44px; }
+.footer-brand-name { font-family:'Playfair Display',serif; font-size:1.7rem; font-weight:900; font-style:italic; background:linear-gradient(135deg,var(--gold-bright),var(--gold-warm)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:12px; }
+.footer-desc { font-size:.95rem; line-height:1.7; color:var(--text-muted); max-width:230px; }
+.footer-col h4 { font-family:'Space Mono',monospace; font-size:.6rem; letter-spacing:.25em; text-transform:uppercase; color:var(--gold-bright); margin-bottom:18px; }
+.footer-col ul { list-style:none; display:flex; flex-direction:column; gap:9px; }
+.footer-col a { color:var(--text-muted); text-decoration:none; font-size:.9rem; transition:color .3s; }
+.footer-col a:hover { color:var(--text-primary); }
+.footer-bottom { display:flex; align-items:center; justify-content:space-between; padding-top:24px; border-top:1px solid rgba(255,255,255,.05); font-family:'Space Mono',monospace; font-size:.58rem; letter-spacing:.1em; color:rgba(240,232,208,.25); }
+.socials { display:flex; gap:10px; }
+.soc-btn { width:34px; height:34px; border-radius:50%; border:1px solid var(--glass-light); display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:.85rem; cursor:pointer; transition:all .3s; }
+.soc-btn:hover { border-color:var(--gold-bright); color:var(--gold-bright); }
+
+/* Lightbox */
+.lb { position:fixed; inset:0; z-index:200; background:rgba(3,11,26,.94); backdrop-filter:blur(18px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .3s; }
+.lb.open { opacity:1; pointer-events:all; }
+.lb-inner { max-width:880px; width:90%; display:grid; grid-template-columns:1.3fr 1fr; gap:0; background:var(--card-bg); border-radius:var(--radius); overflow:hidden; border:1px solid var(--glass-border); transform:scale(.93); transition:transform .3s; }
+.lb.open .lb-inner { transform:scale(1); }
+.lb-img-wrap { min-height:400px; }
+.lb-details { padding:32px 28px; display:flex; flex-direction:column; }
+.lb-cat { font-family:'Space Mono',monospace; font-size:.58rem; letter-spacing:.22em; text-transform:uppercase; color:var(--gold-bright); margin-bottom:10px; }
+.lb-title { font-family:'Playfair Display',serif; font-size:1.7rem; font-weight:900; line-height:1.1; margin-bottom:12px; }
+.lb-desc { font-size:.98rem; line-height:1.7; color:var(--text-muted); flex:1; }
+.lb-meta { margin-top:20px; padding-top:18px; border-top:1px solid rgba(255,255,255,.08); display:flex; align-items:center; gap:12px; }
+.lb-author-name { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; }
+.lb-author-sub { font-size:.78rem; color:var(--text-muted); }
+.lb-likes { margin-top:16px; display:flex; gap:10px; align-items:center; }
+.lb-close { position:absolute; top:18px; right:18px; background:var(--glass-bg); border:1px solid var(--glass-light); color:var(--text-primary); width:38px; height:38px; border-radius:50%; font-size:1.1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .3s; }
+.lb-close:hover { border-color:var(--gold-bright); color:var(--gold-bright); }
+.comments-box { margin-top:16px; max-height:120px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
+.comment-item { background:rgba(255,255,255,.04); border-radius:6px; padding:7px 10px; font-size:.85rem; }
+.comment-author { font-weight:700; color:var(--gold-warm); font-size:.75rem; }
+.comment-form { display:flex; gap:8px; margin-top:8px; }
+.comment-form input { flex:1; background:rgba(10,22,40,.7); border:1px solid var(--glass-light); color:var(--text-primary); padding:7px 12px; border-radius:var(--radius-sm); font-family:inherit; font-size:.9rem; outline:none; }
+.comment-form input:focus { border-color:var(--gold-bright); }
+
+@media(max-width:1100px){.masonry{columns:3}.artists-row{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.featured-grid{grid-template-columns:1fr}.art-card.large{grid-row:auto}.masonry{columns:2}.sched-grid{grid-template-columns:1fr}.lb-inner{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="sky"></div>
+
+<!-- Lightbox -->
+<div class="lb" id="lb">
+  <div class="lb-inner">
+    <div class="lb-img-wrap" id="lbImgWrap"></div>
+    <div class="lb-details">
+      <div class="lb-cat" id="lbCat"></div>
+      <div class="lb-title" id="lbTitle"></div>
+      <div class="lb-desc" id="lbDesc"></div>
+      <div class="lb-meta">
+        <div>
+          <div class="lb-author-name" id="lbAuthor"></div>
+          <div class="lb-author-sub" id="lbAuthorSub"></div>
+        </div>
+      </div>
+      <div class="lb-likes">
+        <button class="like-pill" id="lbLikeBtn" onclick="toggleLike()">♡</button>
+        <span id="lbLikeCount" style="font-family:'Space Mono',monospace;font-size:.7rem;color:var(--text-muted)"></span>
+        <a id="lbViewLink" href="#" class="btn btn-ghost btn-sm" style="margin-left:auto">View Full →</a>
+      </div>
+      <div class="comments-box" id="commentsBox"></div>
+      <div class="comment-form" id="commentForm" style="display:none">
+        <input type="text" id="commentInput" placeholder="Add a comment…">
+        <button class="btn btn-gold btn-sm" onclick="postComment()">Post</button>
+      </div>
+    </div>
+  </div>
+  <button class="lb-close" onclick="closeLb()">✕</button>
+</div>
+
+<div class="page">
+  <!-- Nav -->
+  <nav>
+    <a href="/" class="nav-logo">Lumina<small>University Multimedia Exhibition 2025</small></a>
+    <ul class="nav-links">
+      <li><a href="/#featured">Featured</a></li>
+      <li><a href="/#gallery">Gallery</a></li>
+      <li><a href="/#artists">Artists</a></li>
+      <li><a href="/#schedule">Events</a></li>
+    </ul>
+    <div class="nav-right" id="navRight"></div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <p class="hero-eyebrow">✦ Faculty of Arts & Digital Media · 2025 ✦</p>
+    <h1 class="hero-title">Where <em>Vision</em><br>Becomes Art</h1>
+    <p class="hero-sub">A curated showcase of extraordinary multimedia works by university creative arts students.</p>
+    <div class="hero-btns">
+      <button class="btn btn-gold" onclick="scrollTo('#gallery')">Explore Exhibition</button>
+      <button class="btn btn-ghost" onclick="scrollTo('#schedule')">View Schedule</button>
+    </div>
+    <div class="hero-stats" id="heroStats">
+      <div class="stat"><div class="stat-num" id="statWorks">—</div><div class="stat-label">Artworks</div></div>
+      <div class="stat"><div class="stat-num" id="statArtists">—</div><div class="stat-label">Students</div></div>
+      <div class="stat"><div class="stat-num">12</div><div class="stat-label">Categories</div></div>
+      <div class="stat"><div class="stat-num">5</div><div class="stat-label">Awards</div></div>
+    </div>
+    <div class="scroll-arrow" onclick="scrollTo('#featured')">
+      <span>Scroll</span><div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- Featured -->
+  <section class="section" id="featured">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:48px;">
+      <div><div class="section-eyebrow">✦ Curated Selection</div><h2 class="section-title">Featured <em>Works</em></h2></div>
+      <a href="/gallery" class="btn btn-ghost btn-sm">View All →</a>
+    </div>
+    <div class="featured-grid" id="featuredGrid"><p style="color:var(--text-muted);font-style:italic">Loading…</p></div>
+  </section>
+
+  <!-- Gallery -->
+  <section class="section" id="gallery">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:48px;">
+      <div><div class="section-eyebrow">✦ Student Portfolio</div><h2 class="section-title">The <em>Gallery</em></h2></div>
+      <a href="/gallery" class="btn btn-ghost btn-sm">Full Gallery →</a>
+    </div>
+    <div class="filters" id="galleryFilters"></div>
+    <div class="masonry" id="masonryGrid"></div>
+  </section>
+
+  <!-- Artists -->
+  <section class="section" id="artists">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:48px;">
+      <div><div class="section-eyebrow">✦ Creative Minds</div><h2 class="section-title">Artist <em>Spotlight</em></h2></div>
+    </div>
+    <div class="artists-row" id="artistsRow"></div>
+  </section>
+
+  <!-- Schedule -->
+  <section class="section" id="schedule" style="background:linear-gradient(135deg,rgba(10,22,40,.7) 0%,rgba(3,11,26,.85) 100%);border-top:1px solid var(--glass-light);border-bottom:1px solid var(--glass-light);">
+    <div style="margin-bottom:48px;"><div class="section-eyebrow">✦ Programme</div><h2 class="section-title">Exhibition <em>Events</em></h2></div>
+    <div class="sched-grid">
+      <div id="schedList"></div>
+      <div class="sched-visual">
+        <svg viewBox="0 0 500 380" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+          <defs><radialGradient id="sg" cx="50%" cy="50%"><stop offset="0%" stop-color="#0d2240"/><stop offset="100%" stop-color="#030b1a"/></radialGradient><filter id="glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+          <rect width="500" height="380" fill="url(#sg)"/>
+          <circle cx="250" cy="190" r="155" fill="none" stroke="#1a3a6b" stroke-width="38" opacity=".35"/>
+          <circle cx="250" cy="190" r="105" fill="none" stroke="#0d2240" stroke-width="28" opacity=".45"/>
+          <circle cx="78" cy="68" r="24" fill="#e8a020" opacity=".8" filter="url(#glow)"/>
+          <circle cx="388" cy="52" r="18" fill="#f5c842" opacity=".7" filter="url(#glow)"/>
+          <path d="M100,190 Q180,100 250,190 Q320,280 400,190" stroke="#1b4f8a" stroke-width="2" fill="none" opacity=".6"/>
+          <rect x="140" y="95" width="220" height="175" rx="8" fill="rgba(10,22,40,.75)" stroke="#f5c842" stroke-width="1.5" opacity=".8"/>
+          <rect x="155" y="108" width="190" height="143" rx="5" fill="#0a1628"/>
+          <circle cx="250" cy="180" r="45" fill="#0d2240"/>
+          <circle cx="250" cy="180" r="28" fill="#1a3a6b"/>
+          <circle cx="250" cy="180" r="13" fill="#e8a020" opacity=".55"/>
+          <circle cx="170" cy="310" r="2" fill="white" opacity=".6"/>
+          <circle cx="220" cy="335" r="1.5" fill="white" opacity=".8"/>
+          <circle cx="320" cy="320" r="2" fill="white" opacity=".5"/>
+          <rect x="140" y="285" width="220" height="34" rx="17" fill="rgba(10,22,40,.8)" stroke="rgba(245,200,66,.3)" stroke-width="1"/>
+          <circle cx="162" cy="302" r="5" fill="#4ade80"/>
+          <text x="178" y="307" font-family="monospace" font-size="10" fill="#f5c842" letter-spacing="1">EXHIBITION LIVE NOW</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-band">
+    <div class="section-eyebrow" style="margin-bottom:14px;">✦ Be Part of Lumina ✦</div>
+    <h2>Share Your <em style="font-style:italic;color:var(--gold-bright)">Creative Vision</em></h2>
+    <p>All students enrolled in the Faculty of Arts & Digital Media are invited to submit their works.</p>
+    <div class="cta-row">
+      <a href="/auth?mode=register" class="btn btn-gold">Submit Your Work</a>
+      <a href="/gallery" class="btn btn-ghost">Explore Gallery</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-grid">
+      <div><div class="footer-brand-name">Lumina</div><p class="footer-desc">The University's annual multimedia exhibition celebrating student creativity across all digital art disciplines.</p></div>
+      <div class="footer-col"><h4>Navigate</h4><ul><li><a href="/gallery">Gallery</a></li><li><a href="/#artists">Artists</a></li><li><a href="/#schedule">Events</a></li><li><a href="#">Awards</a></li></ul></div>
+      <div class="footer-col"><h4>Participate</h4><ul><li><a href="/auth?mode=register">Submit Work</a></li><li><a href="#">Guidelines</a></li><li><a href="#">Categories</a></li><li><a href="#">Judging</a></li></ul></div>
+      <div class="footer-col"><h4>University</h4><ul><li><a href="#">Faculty of Arts</a></li><li><a href="#">Digital Media Dept.</a></li><li><a href="#">Student Union</a></li><li><a href="#">Contact</a></li></ul></div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Lumina Exhibition · University of Creative Arts</span>
+      <div class="socials"><div class="soc-btn">𝕏</div><div class="soc-btn">in</div><div class="soc-btn">◎</div><div class="soc-btn">▶</div></div>
+    </div>
+  </footer>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+const CATS = ['all','digital','photography','3d','illustration','video','interactive'];
+let currentArtwork = null;
+
+function scrollTo(sel) { document.querySelector(sel)?.scrollIntoView({behavior:'smooth'}); }
+
+// ── Stats ──────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const [artworks, artists] = await Promise.all([
+      apiFetch('/api/artworks?limit=1'),
+      apiFetch('/api/artists')
+    ]);
+    animateNum('statWorks', artworks.length < 20 ? artworks.length : 248);
+    animateNum('statArtists', artists.length || 86);
+  } catch {}
+}
+function animateNum(id, target) {
+  let n=0; const el=document.getElementById(id);
+  const step = Math.ceil(target/40);
+  const t = setInterval(()=>{ n=Math.min(n+step,target); el.textContent=n; if(n>=target) clearInterval(t); },40);
+}
+
+// ── Featured ───────────────────────────────────────────────
+async function loadFeatured() {
+  try {
+    const arts = await apiFetch('/api/artworks?featured=true&limit=3');
+    const grid = document.getElementById('featuredGrid');
+    if (!arts.length) { grid.innerHTML = '<p style="color:var(--text-muted);font-style:italic">No featured works yet.</p>'; return; }
+    grid.innerHTML = '';
+    arts.slice(0,3).forEach((a,i) => {
+      const card = document.createElement('div');
+      card.className = 'art-card reveal' + (i===0?' large':'');
+      const imgHtml = a.image_url
+        ? `<div class="art-thumb-wrap ${i===0?'large':'small'}" style="overflow:hidden"><img src="${a.image_url}" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"></div>`
+        : `<div class="art-thumb-wrap ${i===0?'large':'small'}">${artSVG(a.id,500,i===0?500:250)}</div>`;
+      card.innerHTML = `${imgHtml}
+        <div class="art-overlay">
+          <div class="art-cat">${a.category}</div>
+          <div class="art-title">${a.title}</div>
+          <div class="art-author">${a.author?.name||'Unknown'} · <span style="opacity:.6">${a.likes} ♥</span></div>
+        </div>
+        <button class="like-pill" onclick="event.stopPropagation()">♡</button>`;
+      card.addEventListener('click', ()=>openLb(a));
+      grid.appendChild(card);
+    });
+    initReveal();
+  } catch(e) { console.error(e); }
+}
+
+// ── Gallery ────────────────────────────────────────────────
+let allArts = [];
+async function loadGallery(cat='all') {
+  try {
+    const url = cat==='all' ? '/api/artworks?limit=20' : `/api/artworks?category=${cat}&limit=20`;
+    allArts = await apiFetch(url);
+    renderMasonry(allArts);
+  } catch(e) { console.error(e); }
+}
+function renderMasonry(arts) {
+  const grid = document.getElementById('masonryGrid');
+  const hs = [180,240,200,160,280,220,190,250,170,230];
+  grid.innerHTML = '';
+  arts.forEach((a,i) => {
+    const item = document.createElement('div');
+    item.className = 'reveal m-item';
+    const imgHtml = a.image_url
+      ? `<img src="${a.image_url}" style="width:100%;display:block;max-height:280px;object-fit:cover">`
+      : artSVG(a.id,300,hs[i%hs.length]);
+    item.innerHTML = `${imgHtml}
+      <div class="m-info">
+        <div class="m-name">${a.title}</div>
+        <div class="m-author">${a.author?.name||''} · ${a.category}</div>
+      </div>`;
+    item.addEventListener('click', ()=>openLb(a));
+    grid.appendChild(item);
+  });
+  initReveal();
+}
+function buildFilters() {
+  const container = document.getElementById('galleryFilters');
+  CATS.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'flt' + (c==='all'?' active':'');
+    btn.textContent = c==='all'?'All Works':c.charAt(0).toUpperCase()+c.slice(1);
+    btn.onclick = () => {
+      container.querySelectorAll('.flt').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      loadGallery(c);
+    };
+    container.appendChild(btn);
+  });
+}
+
+// ── Artists ────────────────────────────────────────────────
+async function loadArtists() {
+  try {
+    const artists = await apiFetch('/api/artists');
+    const row = document.getElementById('artistsRow');
+    row.innerHTML = '';
+    artists.slice(0,4).forEach((a,i) => {
+      const card = document.createElement('div');
+      card.className = 'reveal artist-card';
+      card.innerHTML = `
+        <div class="a-ring"><svg viewBox="0 0 80 80" class="a-img" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="40" cy="40" r="40" fill="${['#0d2240','#1a3a6b','#0a1628','#152d55'][i%4]}"/>
+          <circle cx="40" cy="32" r="13" fill="${['#1b4f8a','#264785','#1a3a6b','#2a5298'][i%4]}"/>
+          <ellipse cx="40" cy="62" rx="20" ry="14" fill="${['#1a3a6b','#1b4f8a','#152d55','#1e4080'][i%4]}"/>
+        </svg></div>
+        <div class="a-name">${a.name}</div>
+        <div class="a-major">${a.major||'Multimedia Arts'}</div>
+        <div class="a-count"><strong>${a.artwork_count}</strong> works · ${a.year||''}</div>
+      `;
+      card.onclick = () => location.href = `/artist/${a.uuid}`;
+      row.appendChild(card);
+    });
+    initReveal();
+  } catch(e){ console.error(e); }
+}
+
+// ── Schedule ───────────────────────────────────────────────
+async function loadSchedule() {
+  try {
+    const events = await apiFetch('/api/events');
+    const list = document.getElementById('schedList');
+    list.innerHTML = '';
+    events.forEach(e => {
+      const d = new Date(e.event_date);
+      const row = document.createElement('div');
+      row.className = 'event-row';
+      row.innerHTML = `
+        <div class="event-date-box">
+          <div class="e-day">${d.getDate()}</div>
+          <div class="e-mon">${d.toLocaleString('default',{month:'short'}).toUpperCase()}</div>
+        </div>
+        <div>
+          <div class="e-type">${e.event_type}</div>
+          <div class="e-title">${e.title}</div>
+          <div class="e-time">🕐 ${e.event_time} · ${e.location}</div>
+        </div>`;
+      list.appendChild(row);
+    });
+  } catch(e){ console.error(e); }
+}
+
+// ── Lightbox ───────────────────────────────────────────────
+function openLb(a) {
+  currentArtwork = a;
+  document.getElementById('lbCat').textContent = a.category;
+  document.getElementById('lbTitle').textContent = a.title;
+  document.getElementById('lbDesc').textContent = a.description||'';
+  document.getElementById('lbAuthor').textContent = a.author?.name||'Unknown';
+  document.getElementById('lbAuthorSub').textContent = (a.author?.major||'') + ' · ' + (a.author?.year||'');
+  document.getElementById('lbLikeCount').textContent = (a.likes||0) + ' likes';
+  document.getElementById('lbViewLink').href = '#';
+  const wrap = document.getElementById('lbImgWrap');
+  wrap.innerHTML = a.image_url
+    ? `<img src="${a.image_url}" style="width:100%;height:100%;min-height:400px;object-fit:cover;display:block">`
+    : artSVG(a.id,500,500);
+  loadComments(a.uuid);
+  document.getElementById('commentForm').style.display = isLoggedIn() ? 'flex' : 'none';
+  document.getElementById('lb').classList.add('open');
+}
+function closeLb() { document.getElementById('lb').classList.remove('open'); currentArtwork=null; }
+document.getElementById('lb').addEventListener('click', e => { if(e.target===document.getElementById('lb')) closeLb(); });
+
+async function toggleLike() {
+  if (!isLoggedIn()) { location.href='/auth'; return; }
+  if (!currentArtwork) return;
+  try {
+    const res = await apiFetch(`/api/artworks/${currentArtwork.uuid}/like`, {method:'POST'});
+    document.getElementById('lbLikeBtn').textContent = res.liked ? '♥' : '♡';
+    document.getElementById('lbLikeCount').textContent = res.likes + ' likes';
+  } catch(e){ toast(e.message,'error'); }
+}
+
+async function loadComments(uuid) {
+  const box = document.getElementById('commentsBox');
+  try {
+    const c = await apiFetch(`/api/artworks/${uuid}/comments`);
+    box.innerHTML = c.length ? c.map(x=>`<div class="comment-item"><span class="comment-author">${x.name}:</span> ${x.content}</div>`).join('') : '<p style="font-size:.8rem;color:var(--text-muted);font-style:italic">No comments yet.</p>';
+  } catch{}
+}
+
+async function postComment() {
+  if (!currentArtwork) return;
+  const input = document.getElementById('commentInput');
+  if (!input.value.trim()) return;
+  try {
+    await apiFetch(`/api/artworks/${currentArtwork.uuid}/comments`, {method:'POST', body:JSON.stringify({content:input.value.trim()})});
+    input.value = '';
+    loadComments(currentArtwork.uuid);
+  } catch(e){ toast(e.message,'error'); }
+}
+
+// ── Init ───────────────────────────────────────────────────
+buildFilters();
+loadStats();
+loadFeatured();
+loadGallery();
+loadArtists();
+loadSchedule();
+</script>
+</body>
+</html>

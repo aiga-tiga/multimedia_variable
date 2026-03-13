@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lumina — Admin Panel</title>
+<link rel="stylesheet" href="/css/theme.css">
+<style>
+.admin-layout { display:grid; grid-template-columns:240px 1fr; min-height:100vh; }
+.admin-sidebar {
+  background:rgba(3,11,26,.9); border-right:1px solid var(--glass-light);
+  padding:80px 0 40px; position:sticky; top:0; height:100vh; overflow-y:auto;
+  display:flex; flex-direction:column;
+}
+.admin-logo { padding:20px 24px 24px; border-bottom:1px solid var(--glass-light); margin-bottom:12px; }
+.admin-logo span { font-family:'Space Mono',monospace; font-size:.6rem; letter-spacing:.2em; text-transform:uppercase; color:var(--gold-warm); display:block; margin-top:2px; }
+.admin-nav-item {
+  display:flex; align-items:center; gap:10px; padding:11px 18px;
+  border-radius:8px; cursor:pointer; margin:0 10px 2px;
+  font-family:'Space Mono',monospace; font-size:.65rem; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--text-muted); transition:all .3s;
+}
+.admin-nav-item .icon { font-size:1rem; }
+.admin-nav-item:hover { background:rgba(255,255,255,.05); color:var(--text-primary); }
+.admin-nav-item.active { background:rgba(245,200,66,.1); color:var(--gold-bright); border:1px solid rgba(245,200,66,.2); }
+.badge-count { background:var(--gold-bright); color:var(--night-deep); padding:1px 7px; border-radius:12px; font-size:.6rem; font-weight:700; margin-left:auto; }
+
+.admin-main { padding:85px 36px 60px; }
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+
+/* Stats */
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:36px; }
+.stat-box { background:var(--card-bg); border:1px solid var(--glass-light); border-radius:var(--radius); padding:20px 18px; backdrop-filter:blur(16px); }
+.stat-box-num { font-family:'Playfair Display',serif; font-size:2rem; font-weight:900; color:var(--gold-bright); }
+.stat-box-label { font-family:'Space Mono',monospace; font-size:.56rem; letter-spacing:.18em; text-transform:uppercase; color:var(--text-muted); margin-top:4px; }
+
+/* Table */
+.admin-table-wrap { background:var(--card-bg); border:1px solid var(--glass-light); border-radius:var(--radius); overflow:hidden; backdrop-filter:blur(16px); }
+.admin-table { width:100%; border-collapse:collapse; }
+.admin-table thead tr { background:rgba(245,200,66,.06); border-bottom:1px solid var(--glass-border); }
+.admin-table th { padding:14px 16px; font-family:'Space Mono',monospace; font-size:.58rem; letter-spacing:.18em; text-transform:uppercase; color:var(--gold-warm); text-align:left; white-space:nowrap; }
+.admin-table td { padding:13px 16px; border-bottom:1px solid rgba(255,255,255,.04); font-size:.92rem; vertical-align:middle; }
+.admin-table tr:last-child td { border-bottom:none; }
+.admin-table tr:hover td { background:rgba(255,255,255,.03); }
+.thumb { width:46px; height:36px; border-radius:5px; object-fit:cover; border:1px solid var(--glass-light); background:var(--blue-mid); display:block; overflow:hidden; }
+.action-group { display:flex; gap:6px; }
+
+/* Events form */
+.event-form { background:var(--card-bg); border:1px solid var(--glass-light); border-radius:var(--radius); padding:28px; margin-bottom:28px; backdrop-filter:blur(16px); }
+.event-form h3 { font-family:'Playfair Display',serif; font-size:1.2rem; font-weight:700; margin-bottom:18px; }
+.event-form-fields { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.event-form-fields .full { grid-column:1/-1; }
+
+/* Filter bar */
+.filter-bar { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+.filter-bar input { background:rgba(10,22,40,.7); border:1px solid var(--glass-light); color:var(--text-primary); padding:9px 14px; border-radius:var(--radius-sm); font-family:'Cormorant Garamond',serif; font-size:.95rem; outline:none; flex:1; max-width:280px; transition:border-color .3s; }
+.filter-bar input:focus { border-color:var(--gold-bright); }
+
+.page-heading { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:900; margin-bottom:6px; }
+.page-heading em { font-style:italic; color:var(--gold-bright); }
+.page-subheading { font-size:.95rem; color:var(--text-muted); margin-bottom:28px; }
+</style>
+</head>
+<body>
+<div id="sky"></div>
+
+<div class="page">
+  <nav>
+    <a href="/" class="nav-logo">Lumina<small>Admin Panel</small></a>
+    <ul class="nav-links"><li><a href="/">Public Site</a></li></ul>
+    <div class="nav-right" id="navRight"></div>
+  </nav>
+
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="admin-logo">
+        <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:900;font-style:italic;color:var(--gold-bright)">Lumina</div>
+        <span>Administrator</span>
+      </div>
+      <nav style="flex:1">
+        <div class="admin-nav-item active" onclick="showPanel('dashboard')" data-panel="dashboard"><span class="icon">📊</span> Dashboard</div>
+        <div class="admin-nav-item" onclick="showPanel('artworks')" data-panel="artworks"><span class="icon">🖼️</span> Artworks <span id="pendingBadge" class="badge-count" style="display:none">0</span></div>
+        <div class="admin-nav-item" onclick="showPanel('users')" data-panel="users"><span class="icon">👥</span> Students</div>
+        <div class="admin-nav-item" onclick="showPanel('events')" data-panel="events"><span class="icon">📅</span> Events</div>
+      </nav>
+      <div style="padding:20px 14px;border-top:1px solid var(--glass-light)">
+        <a href="/dashboard" class="btn btn-ghost btn-sm" style="width:100%;justify-content:center">Student View</a>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="admin-main">
+
+      <!-- Dashboard -->
+      <div class="tab-panel active" id="panel-dashboard">
+        <h1 class="page-heading">Admin <em>Dashboard</em></h1>
+        <p class="page-subheading">Overview of the Lumina exhibition platform.</p>
+        <div class="stats-row" id="statsRow">
+          <div class="stat-box"><div class="stat-box-num" id="stStudents">—</div><div class="stat-box-label">Students</div></div>
+          <div class="stat-box"><div class="stat-box-num" id="stArtworks">—</div><div class="stat-box-label">Artworks</div></div>
+          <div class="stat-box"><div class="stat-box-num" id="stPending">—</div><div class="stat-box-label">Pending Review</div></div>
+          <div class="stat-box"><div class="stat-box-num" id="stLikes">—</div><div class="stat-box-label">Total Likes</div></div>
+        </div>
+        <div style="display:flex;gap:24px;flex-wrap:wrap">
+          <div style="flex:1;min-width:280px">
+            <h3 style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;margin-bottom:14px">Artwork Breakdown</h3>
+            <div style="background:var(--card-bg);border:1px solid var(--glass-light);border-radius:var(--radius);padding:22px;backdrop-filter:blur(16px)">
+              <div id="breakdownBars"></div>
+            </div>
+          </div>
+          <div style="flex:1;min-width:280px">
+            <h3 style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;margin-bottom:14px">Quick Actions</h3>
+            <div style="background:var(--card-bg);border:1px solid var(--glass-light);border-radius:var(--radius);padding:22px;backdrop-filter:blur(16px);display:flex;flex-direction:column;gap:10px">
+              <button class="btn btn-gold" onclick="showPanel('artworks');filterStatus('pending')">Review Pending Works</button>
+              <button class="btn btn-ghost" onclick="showPanel('events')">Manage Events</button>
+              <button class="btn btn-ghost" onclick="showPanel('users')">View Students</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Artworks -->
+      <div class="tab-panel" id="panel-artworks">
+        <h1 class="page-heading">Manage <em>Artworks</em></h1>
+        <p class="page-subheading">Review, approve or reject student submissions.</p>
+        <div class="filter-bar">
+          <input type="text" id="artSearch" placeholder="Search by title or author…" oninput="filterArtworks()">
+          <div class="filters" id="artStatusFilters">
+            <button class="flt active" data-s="all" onclick="filterStatus('all')">All</button>
+            <button class="flt" data-s="pending" onclick="filterStatus('pending')">Pending</button>
+            <button class="flt" data-s="approved" onclick="filterStatus('approved')">Approved</button>
+            <button class="flt" data-s="rejected" onclick="filterStatus('rejected')">Rejected</button>
+          </div>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr>
+              <th>Image</th><th>Title</th><th>Artist</th><th>Category</th>
+              <th>Status</th><th>Likes</th><th>Submitted</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="artworksBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Users -->
+      <div class="tab-panel" id="panel-users">
+        <h1 class="page-heading">Manage <em>Students</em></h1>
+        <p class="page-subheading">All registered student accounts.</p>
+        <div class="filter-bar">
+          <input type="text" id="userSearch" placeholder="Search by name or email…" oninput="filterUsers()">
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Major</th><th>Year</th><th>Works</th><th>Joined</th><th>Actions</th></tr></thead>
+            <tbody id="usersBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Events -->
+      <div class="tab-panel" id="panel-events">
+        <h1 class="page-heading">Manage <em>Events</em></h1>
+        <p class="page-subheading">Create and manage exhibition events.</p>
+        <div class="event-form">
+          <h3 id="eventFormTitle">Add New Event</h3>
+          <div class="event-form-fields">
+            <div class="form-group full"><label class="form-label">Event Title *</label><input class="form-input" type="text" id="evTitle" placeholder="Event name"></div>
+            <div class="form-group full"><label class="form-label">Description</label><textarea class="form-textarea" id="evDesc" style="min-height:70px" placeholder="Brief description"></textarea></div>
+            <div class="form-group"><label class="form-label">Event Type</label>
+              <select class="form-select" id="evType">
+                <option value="exhibition">Exhibition</option><option value="opening">Opening</option>
+                <option value="closing">Closing</option><option value="workshop">Workshop</option>
+                <option value="talk">Artist Talk</option><option value="award">Award</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Location</label><input class="form-input" type="text" id="evLocation" placeholder="Gallery B, Block 4"></div>
+            <div class="form-group"><label class="form-label">Date *</label><input class="form-input" type="date" id="evDate"></div>
+            <div class="form-group"><label class="form-label">Time</label><input class="form-input" type="time" id="evTime"></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:14px">
+            <button class="btn btn-gold" onclick="saveEvent()" id="evSaveBtn">Add Event</button>
+            <button class="btn btn-ghost" onclick="resetEventForm()">Clear</button>
+          </div>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Date</th><th>Type</th><th>Title</th><th>Location</th><th>Time</th><th>Actions</th></tr></thead>
+            <tbody id="eventsBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (!isLoggedIn() || getUser()?.role !== 'admin') location.href = '/auth';
+
+let allArtworksData = [], allUsersData = [], currentStatus = 'all', editEventId = null;
+
+function showPanel(name) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.admin-nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+name)?.classList.add('active');
+  document.querySelector(`[data-panel="${name}"]`)?.classList.add('active');
+}
+
+// ── Stats ──────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const s = await apiFetch('/api/admin/stats');
+    document.getElementById('stStudents').textContent = s.users;
+    document.getElementById('stArtworks').textContent = s.artworks;
+    document.getElementById('stPending').textContent = s.pending;
+    document.getElementById('stLikes').textContent = s.likes;
+    if (s.pending > 0) {
+      const badge = document.getElementById('pendingBadge');
+      badge.textContent = s.pending; badge.style.display='inline';
+    }
+    // Breakdown bars
+    const bars = document.getElementById('breakdownBars');
+    const items = [
+      {label:'Approved', val:s.approved, total:s.artworks||1, color:'var(--success)'},
+      {label:'Pending', val:s.pending, total:s.artworks||1, color:'var(--warning)'},
+      {label:'Rejected', val:s.rejected, total:s.artworks||1, color:'var(--danger)'},
+    ];
+    bars.innerHTML = items.map(i=>`
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text-muted);margin-bottom:6px">
+          <span>${i.label}</span><span>${i.val}</span>
+        </div>
+        <div style="height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${Math.round(i.val/i.total*100)}%;background:${i.color};border-radius:3px;transition:width .8s ease"></div>
+        </div>
+      </div>`).join('');
+  } catch(e){ console.error(e); }
+}
+
+// ── Artworks ───────────────────────────────────────────────
+async function loadArtworks() {
+  try {
+    allArtworksData = await apiFetch('/api/admin/artworks');
+    renderArtworks(allArtworksData);
+  } catch(e){ console.error(e); }
+}
+
+function filterStatus(s) {
+  currentStatus = s;
+  document.querySelectorAll('#artStatusFilters .flt').forEach(b=>{
+    b.classList.toggle('active', b.dataset.s===s);
+  });
+  filterArtworks();
+}
+
+function filterArtworks() {
+  const q = document.getElementById('artSearch')?.value.toLowerCase()||'';
+  let data = allArtworksData;
+  if (currentStatus !== 'all') data = data.filter(a=>a.status===currentStatus);
+  if (q) data = data.filter(a=>a.title.toLowerCase().includes(q)||a.author_name?.toLowerCase().includes(q));
+  renderArtworks(data);
+}
+
+function renderArtworks(data) {
+  const tbody = document.getElementById('artworksBody');
+  tbody.innerHTML = data.length ? data.map(a=>`
+    <tr>
+      <td><div class="thumb">${a.image_url?`<img src="${a.image_url}" style="width:100%;height:100%;object-fit:cover">`:artSVG(a.id,46,36)}</div></td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Playfair Display',serif;font-weight:700">${a.title}</td>
+      <td style="color:var(--text-muted)">${a.author_name||'—'}</td>
+      <td><span class="badge badge-gray">${a.category}</span></td>
+      <td><span class="badge ${a.status==='approved'?'badge-green':a.status==='rejected'?'badge-red':'badge-gold'}">${a.status}</span></td>
+      <td style="color:var(--gold-bright)">${a.likes||0}</td>
+      <td style="color:var(--text-muted);font-size:.8rem">${new Date(a.created_at).toLocaleDateString()}</td>
+      <td><div class="action-group">
+        ${a.status!=='approved'?`<button class="btn btn-success btn-sm" onclick="setStatus(${a.id},'approved')">✓</button>`:''}
+        ${a.status!=='rejected'?`<button class="btn btn-danger btn-sm" onclick="setStatus(${a.id},'rejected')">✗</button>`:''}
+        ${a.featured?`<button class="btn btn-ghost btn-sm" title="Unfeature" onclick="setFeatured(${a.id},0)">★</button>`:
+          `<button class="btn btn-ghost btn-sm" title="Feature" onclick="setFeatured(${a.id},1)">☆</button>`}
+      </div></td>
+    </tr>`).join('') : '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted);font-style:italic">No artworks found.</td></tr>';
+}
+
+async function setStatus(id, status) {
+  try {
+    await apiFetch('/api/admin/artworks/'+id+'/status', {method:'PATCH', body:JSON.stringify({status})});
+    toast('Status updated to '+status, 'success');
+    loadArtworks(); loadStats();
+  } catch(e){ toast(e.message,'error'); }
+}
+async function setFeatured(id, featured) {
+  try {
+    await apiFetch('/api/admin/artworks/'+id+'/status', {method:'PATCH', body:JSON.stringify({status:allArtworksData.find(a=>a.id===id)?.status||'approved',featured})});
+    toast(featured?'Artwork featured!':'Artwork unfeatured', 'success');
+    loadArtworks();
+  } catch(e){ toast(e.message,'error'); }
+}
+
+// ── Users ──────────────────────────────────────────────────
+async function loadUsers() {
+  try {
+    allUsersData = await apiFetch('/api/admin/users');
+    renderUsers(allUsersData);
+  } catch{}
+}
+function filterUsers() {
+  const q = document.getElementById('userSearch').value.toLowerCase();
+  renderUsers(q ? allUsersData.filter(u=>u.name.toLowerCase().includes(q)||u.email.toLowerCase().includes(q)) : allUsersData);
+}
+function renderUsers(data) {
+  document.getElementById('usersBody').innerHTML = data.filter(u=>u.role!=='admin').map(u=>`
+    <tr>
+      <td style="font-family:'Playfair Display',serif;font-weight:700">${u.name}</td>
+      <td style="color:var(--text-muted);font-size:.85rem">${u.email}</td>
+      <td>${u.major||'—'}</td>
+      <td>${u.year||'—'}</td>
+      <td style="color:var(--gold-bright)">${u.artwork_count||0}</td>
+      <td style="color:var(--text-muted);font-size:.8rem">${new Date(u.created_at).toLocaleDateString()}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id},'${u.name}')">Remove</button></td>
+    </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);font-style:italic">No students yet.</td></tr>';
+}
+async function deleteUser(id, name) {
+  if (!confirm(`Remove student "${name}"? All their artworks will be deleted.`)) return;
+  try {
+    await apiFetch('/api/admin/users/'+id, {method:'DELETE'});
+    toast('Student removed', 'success'); loadUsers(); loadStats();
+  } catch(e){ toast(e.message,'error'); }
+}
+
+// ── Events ─────────────────────────────────────────────────
+async function loadEvents() {
+  try {
+    const events = await apiFetch('/api/events');
+    document.getElementById('eventsBody').innerHTML = events.map(e=>`
+      <tr>
+        <td style="color:var(--gold-bright);font-family:'Space Mono',monospace;font-size:.78rem">${new Date(e.event_date).toLocaleDateString()}</td>
+        <td><span class="badge badge-gray">${e.event_type}</span></td>
+        <td style="font-family:'Playfair Display',serif;font-weight:700">${e.title}</td>
+        <td style="color:var(--text-muted);font-size:.85rem">${e.location||'—'}</td>
+        <td style="color:var(--text-muted);font-size:.85rem">${e.event_time||'—'}</td>
+        <td><div class="action-group">
+          <button class="btn btn-ghost btn-sm" onclick="editEvent(${e.id},'${e.title.replace(/'/g,"\\'")}','${e.description?.replace(/'/g,"\\'")||''}','${e.event_type}','${e.location||''}','${e.event_date}','${e.event_time||''}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEvent(${e.id})">✗</button>
+        </div></td>
+      </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);font-style:italic">No events yet.</td></tr>';
+  } catch{}
+}
+function editEvent(id, title, desc, type, loc, date, time) {
+  editEventId = id;
+  document.getElementById('evTitle').value = title;
+  document.getElementById('evDesc').value = desc;
+  document.getElementById('evType').value = type;
+  document.getElementById('evLocation').value = loc;
+  document.getElementById('evDate').value = date;
+  document.getElementById('evTime').value = time;
+  document.getElementById('eventFormTitle').textContent = 'Edit Event';
+  document.getElementById('evSaveBtn').textContent = 'Save Changes';
+}
+function resetEventForm() {
+  editEventId = null;
+  ['evTitle','evDesc','evLocation','evDate','evTime'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('evType').value='exhibition';
+  document.getElementById('eventFormTitle').textContent='Add New Event';
+  document.getElementById('evSaveBtn').textContent='Add Event';
+}
+async function saveEvent() {
+  const title = document.getElementById('evTitle').value.trim();
+  const event_date = document.getElementById('evDate').value;
+  if (!title || !event_date) { toast('Title and date are required','error'); return; }
+  const body = { title, description:document.getElementById('evDesc').value, event_type:document.getElementById('evType').value, location:document.getElementById('evLocation').value, event_date, event_time:document.getElementById('evTime').value };
+  try {
+    if (editEventId) await apiFetch('/api/events/'+editEventId, {method:'PUT', body:JSON.stringify(body)});
+    else await apiFetch('/api/events', {method:'POST', body:JSON.stringify(body)});
+    toast(editEventId?'Event updated!':'Event added!', 'success');
+    resetEventForm(); loadEvents();
+  } catch(e){ toast(e.message,'error'); }
+}
+async function deleteEvent(id) {
+  if (!confirm('Delete this event?')) return;
+  try { await apiFetch('/api/events/'+id, {method:'DELETE'}); toast('Event deleted','success'); loadEvents(); } catch(e){ toast(e.message,'error'); }
+}
+
+// Add flt class to filter buttons (it's in theme but those are in admin panel)
+document.querySelectorAll('.flt').forEach(b=>b.addEventListener('click',function(){
+  b.closest('.filters')?.querySelectorAll('.flt').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+}));
+
+loadStats(); loadArtworks(); loadUsers(); loadEvents();
+</script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lumina — Artist</title>
+<link rel="stylesheet" href="/css/theme.css">
+<style>
+.artist-hero { padding:120px 48px 60px; display:grid; grid-template-columns:auto 1fr; gap:48px; align-items:center; max-width:900px; margin:0 auto; }
+.artist-avatar-wrap { width:140px; height:140px; border-radius:50%; position:relative; flex-shrink:0; }
+.artist-avatar-wrap::before { content:''; position:absolute; inset:-4px; border-radius:50%; background:conic-gradient(var(--gold-bright),var(--gold-warm),#fff8,var(--gold-bright)); animation:spin 4s linear infinite; }
+@keyframes spin{to{transform:rotate(360deg)}}
+.artist-avatar { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; border:3px solid var(--night-deep); }
+.artist-name { font-family:'Playfair Display',serif; font-size:clamp(2rem,4vw,3.2rem); font-weight:900; line-height:1; margin-bottom:8px; }
+.artist-major { font-family:'Space Mono',monospace; font-size:.68rem; letter-spacing:.22em; text-transform:uppercase; color:var(--gold-warm); margin-bottom:12px; }
+.artist-bio { font-size:1.05rem; line-height:1.7; color:var(--text-muted); max-width:540px; }
+.artist-stats-row { display:flex; gap:32px; margin-top:18px; }
+.a-stat-num { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:900; color:var(--gold-bright); line-height:1; }
+.a-stat-label { font-family:'Space Mono',monospace; font-size:.55rem; letter-spacing:.18em; text-transform:uppercase; color:var(--text-muted); margin-top:3px; }
+.works-section { padding:40px 48px 80px; max-width:1200px; margin:0 auto; }
+.works-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
+.w-card { background:var(--card-bg); border:1px solid var(--glass-light); border-radius:var(--radius); overflow:hidden; cursor:pointer; transition:all .35s; }
+.w-card:hover { border-color:var(--glass-border); transform:translateY(-4px); box-shadow:0 14px 40px rgba(0,0,0,.4),0 0 16px var(--gold-glow); }
+.w-img { width:100%; height:160px; object-fit:cover; display:block; }
+.w-body { padding:14px; }
+.w-title { font-family:'Playfair Display',serif; font-size:.98rem; font-weight:700; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.w-cat { font-family:'Space Mono',monospace; font-size:.56rem; letter-spacing:.12em; text-transform:uppercase; color:var(--text-muted); }
+</style>
+</head>
+<body>
+<div id="sky"></div>
+<div class="page">
+  <nav>
+    <a href="/" class="nav-logo">Lumina<small>University Multimedia Exhibition 2025</small></a>
+    <ul class="nav-links"><li><a href="/">Home</a></li><li><a href="/gallery">Gallery</a></li></ul>
+    <div class="nav-right" id="navRight"></div>
+  </nav>
+  <div id="content" style="text-align:center;padding:200px 40px;color:var(--text-muted);font-style:italic">Loading artist…</div>
+</div>
+<script src="/js/app.js"></script>
+<script>
+const uuid = location.pathname.split('/').pop();
+async function load() {
+  try {
+    const artist = await apiFetch('/api/artists/'+uuid);
+    const totalLikes = (artist.artworks||[]).reduce((s,a)=>s+(a.likes||0),0);
+    document.getElementById('content').innerHTML = `
+      <div class="artist-hero">
+        <div class="artist-avatar-wrap">
+          <svg viewBox="0 0 140 140" class="artist-avatar" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="70" cy="70" r="70" fill="#0d2240"/>
+            <circle cx="70" cy="55" r="24" fill="#1b4f8a"/>
+            <ellipse cx="70" cy="110" rx="35" ry="26" fill="#1a3a6b"/>
+          </svg>
+        </div>
+        <div>
+          <div class="artist-name">${artist.name}</div>
+          <div class="artist-major">${artist.major||'Multimedia Arts'} · ${artist.year||''}</div>
+          <div class="artist-bio">${artist.bio||'No bio provided.'}</div>
+          <div class="artist-stats-row">
+            <div><div class="a-stat-num">${artist.artworks?.length||0}</div><div class="a-stat-label">Works</div></div>
+            <div><div class="a-stat-num">${totalLikes}</div><div class="a-stat-label">Likes</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="works-section">
+        <div class="section-eyebrow">✦ Portfolio</div>
+        <h2 class="section-title" style="margin-bottom:28px">All <em>Works</em></h2>
+        <div class="works-grid">
+          ${(artist.artworks||[]).length ? (artist.artworks||[]).map(w=>`
+            <div class="w-card">
+              ${w.image_url?`<img class="w-img" src="${w.image_url}" alt="${w.title}">`:
+                `<div class="w-img" style="overflow:hidden">${artSVG(w.id,280,160)}</div>`}
+              <div class="w-body"><div class="w-title">${w.title}</div><div class="w-cat">${w.category}</div></div>
+            </div>`).join('') : '<p style="color:var(--text-muted);font-style:italic;grid-column:1/-1">No approved works yet.</p>'}
+        </div>
+      </div>`;
+  } catch(e) {
+    document.getElementById('content').innerHTML = '<p style="padding:200px 40px;color:var(--text-muted)">Artist not found.</p>';
+  }
+}
+load();
+</script>
+</body>
+</html>

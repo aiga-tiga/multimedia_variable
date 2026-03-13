@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lumina — Dashboard</title>
+<link rel="stylesheet" href="/css/theme.css">
+<style>
+.dash-layout { display:grid; grid-template-columns:260px 1fr; gap:0; min-height:100vh; }
+.sidebar {
+  background:rgba(3,11,26,.85); border-right:1px solid var(--glass-light);
+  padding:90px 0 40px; backdrop-filter:blur(20px);
+  position:sticky; top:0; height:100vh; overflow-y:auto;
+  display:flex; flex-direction:column;
+}
+.sidebar-profile { padding:24px 28px 28px; border-bottom:1px solid var(--glass-light); margin-bottom:12px; }
+.profile-avatar { width:70px; height:70px; border-radius:50%; border:2px solid var(--gold-bright); margin-bottom:12px; object-fit:cover; background:var(--blue-mid); }
+.profile-name { font-family:'Playfair Display',serif; font-size:1.15rem; font-weight:700; }
+.profile-major { font-family:'Space Mono',monospace; font-size:.58rem; letter-spacing:.15em; text-transform:uppercase; color:var(--gold-warm); margin-top:3px; }
+.profile-year { font-size:.85rem; color:var(--text-muted); margin-top:2px; }
+.sidebar-nav { padding:0 14px; flex:1; }
+.nav-item {
+  display:flex; align-items:center; gap:12px; padding:12px 16px;
+  border-radius:10px; cursor:pointer; transition:all .3s;
+  font-family:'Space Mono',monospace; font-size:.68rem; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;
+}
+.nav-item .icon { font-size:1.1rem; }
+.nav-item:hover { background:rgba(255,255,255,.05); color:var(--text-primary); }
+.nav-item.active { background:rgba(245,200,66,.1); color:var(--gold-bright); border:1px solid rgba(245,200,66,.2); }
+.sidebar-footer { padding:20px 28px; border-top:1px solid var(--glass-light); }
+
+.main-content { padding:90px 40px 60px; }
+.page-header { margin-bottom:36px; }
+.page-title { font-family:'Playfair Display',serif; font-size:2.2rem; font-weight:900; }
+.page-title em { font-style:italic; color:var(--gold-bright); }
+.page-sub { font-size:1rem; color:var(--text-muted); margin-top:6px; }
+
+/* Stats row */
+.dash-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:40px; }
+.dash-stat { background:var(--card-bg); border:1px solid var(--glass-light); border-radius:var(--radius); padding:22px 20px; text-align:center; backdrop-filter:blur(16px); }
+.dash-stat-num { font-family:'Playfair Display',serif; font-size:2.2rem; font-weight:900; color:var(--gold-bright); }
+.dash-stat-label { font-family:'Space Mono',monospace; font-size:.58rem; letter-spacing:.18em; text-transform:uppercase; color:var(--text-muted); margin-top:5px; }
+
+/* Works grid */
+.works-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:18px; }
+.work-card {
+  background:var(--card-bg); border:1px solid var(--glass-light); border-radius:var(--radius);
+  overflow:hidden; transition:all .4s;
+}
+.work-card:hover { border-color:var(--glass-border); transform:translateY(-4px); box-shadow:0 14px 40px rgba(0,0,0,.4),0 0 16px var(--gold-glow); }
+.work-img { width:100%; height:160px; object-fit:cover; display:block; }
+.work-body { padding:16px; }
+.work-title { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.work-meta { display:flex; align-items:center; justify-content:space-between; }
+.work-actions { display:flex; gap:8px; margin-top:12px; }
+
+/* Upload modal */
+.modal-overlay { position:fixed; inset:0; background:rgba(3,11,26,.9); backdrop-filter:blur(16px); z-index:200; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .3s; }
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal-box { background:rgba(8,18,38,.95); border:1px solid var(--glass-border); border-radius:20px; padding:40px; max-width:540px; width:90%; max-height:90vh; overflow-y:auto; }
+.modal-title { font-family:'Playfair Display',serif; font-size:1.6rem; font-weight:900; margin-bottom:24px; }
+.modal-title em { font-style:italic; color:var(--gold-bright); }
+.upload-form { display:flex; flex-direction:column; gap:18px; }
+.drop-zone {
+  border:2px dashed rgba(245,200,66,.3); border-radius:12px; padding:36px 20px; text-align:center;
+  cursor:pointer; transition:all .3s;
+  background:rgba(10,22,40,.5);
+}
+.drop-zone:hover, .drop-zone.drag { border-color:var(--gold-bright); background:rgba(245,200,66,.05); }
+.drop-zone .icon { font-size:2.5rem; margin-bottom:10px; }
+.drop-zone p { font-size:.95rem; color:var(--text-muted); }
+.drop-zone p strong { color:var(--gold-bright); }
+.drop-zone input { display:none; }
+.preview-wrap { display:none; }
+.preview-wrap img { width:100%; border-radius:8px; border:1px solid var(--glass-border); }
+.modal-actions { display:flex; gap:12px; margin-top:4px; }
+
+/* Profile edit */
+.profile-form { max-width:480px; display:flex; flex-direction:column; gap:18px; }
+
+/* Tab sections */
+.tab-section { display:none; }
+.tab-section.active { display:block; }
+
+@media(max-width:900px){
+  .dash-layout { grid-template-columns:1fr; }
+  .sidebar { position:static; height:auto; padding:80px 0 20px; flex-direction:row; flex-wrap:wrap; }
+  .sidebar-profile { border-bottom:none; border-right:1px solid var(--glass-light); }
+  .dash-stats { grid-template-columns:repeat(2,1fr); }
+  .works-grid { grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); }
+}
+</style>
+</head>
+<body>
+<div id="sky"></div>
+
+<!-- Upload Modal -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal-box">
+    <h2 class="modal-title">Submit <em>Your Work</em></h2>
+    <div class="upload-form">
+      <div class="form-group">
+        <label class="form-label">Artwork Title *</label>
+        <input class="form-input" type="text" id="workTitle" placeholder="Give your work a compelling title">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category *</label>
+        <select class="form-select" id="workCat">
+          <option value="">Select a category</option>
+          <option value="digital">Digital Art</option>
+          <option value="photography">Photography</option>
+          <option value="3d">3D & Motion Graphics</option>
+          <option value="illustration">Illustration</option>
+          <option value="video">Video & Film</option>
+          <option value="interactive">Interactive Media</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-textarea" id="workDesc" placeholder="Describe your work, inspiration, and process…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tags (comma separated)</label>
+        <input class="form-input" type="text" id="workTags" placeholder="e.g. abstract, landscape, digital, ai">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Upload Image</label>
+        <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+          <div class="icon">🖼️</div>
+          <p><strong>Click to upload</strong> or drag & drop</p>
+          <p style="font-size:.8rem;margin-top:4px">JPG, PNG, GIF, WebP · Max 20MB</p>
+          <input type="file" id="fileInput" accept="image/*,video/*" onchange="handleFile(this)">
+        </div>
+        <div class="preview-wrap" id="previewWrap">
+          <img id="previewImg" src="" alt="Preview">
+          <p id="previewName" style="font-size:.8rem;color:var(--text-muted);margin-top:6px"></p>
+        </div>
+      </div>
+      <div id="uploadError" style="color:var(--danger);font-family:'Space Mono',monospace;font-size:.75rem;display:none"></div>
+      <div class="modal-actions">
+        <button class="btn btn-gold" onclick="submitWork()" style="flex:1">Submit for Review →</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <nav>
+    <a href="/" class="nav-logo">Lumina<small>University Multimedia Exhibition 2025</small></a>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/gallery">Gallery</a></li>
+    </ul>
+    <div class="nav-right" id="navRight"></div>
+  </nav>
+
+  <div class="dash-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-profile">
+        <svg class="profile-avatar" viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="35" cy="35" r="35" fill="#0d2240"/>
+          <circle cx="35" cy="28" r="12" fill="#1b4f8a"/>
+          <ellipse cx="35" cy="56" rx="18" ry="13" fill="#1a3a6b"/>
+        </svg>
+        <div class="profile-name" id="sidebarName">Loading…</div>
+        <div class="profile-major" id="sidebarMajor"></div>
+        <div class="profile-year" id="sidebarYear"></div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-item active" onclick="showTab('overview')" data-tab="overview"><span class="icon">🏠</span> Overview</div>
+        <div class="nav-item" onclick="showTab('works')" data-tab="works"><span class="icon">🖼️</span> My Works</div>
+        <div class="nav-item" onclick="showTab('submit')" data-tab="submit"><span class="icon">✦</span> Submit Work</div>
+        <div class="nav-item" onclick="showTab('profile')" data-tab="profile"><span class="icon">👤</span> Profile</div>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/" class="btn btn-ghost btn-sm" style="width:100%;justify-content:center">← Back to Exhibition</a>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+      <!-- Overview -->
+      <div class="tab-section active" id="tab-overview">
+        <div class="page-header">
+          <h1 class="page-title">Your <em>Dashboard</em></h1>
+          <p class="page-sub">Welcome back! Manage your submissions and track your exhibition presence.</p>
+        </div>
+        <div class="dash-stats">
+          <div class="dash-stat"><div class="dash-stat-num" id="dsTotal">0</div><div class="dash-stat-label">Total Works</div></div>
+          <div class="dash-stat"><div class="dash-stat-num" id="dsPending">0</div><div class="dash-stat-label">Pending</div></div>
+          <div class="dash-stat"><div class="dash-stat-num" id="dsApproved">0</div><div class="dash-stat-label">Approved</div></div>
+          <div class="dash-stat"><div class="dash-stat-num" id="dsLikes">0</div><div class="dash-stat-label">Total Likes</div></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <h2 class="section-title" style="font-size:1.5rem">Recent <em>Submissions</em></h2>
+          <button class="btn btn-gold btn-sm" onclick="showTab('submit')">+ Submit Work</button>
+        </div>
+        <div class="works-grid" id="overviewWorks"><p style="color:var(--text-muted);font-style:italic">No works submitted yet.</p></div>
+      </div>
+
+      <!-- My Works -->
+      <div class="tab-section" id="tab-works">
+        <div class="page-header" style="display:flex;align-items:center;justify-content:space-between">
+          <div><h1 class="page-title">My <em>Works</em></h1><p class="page-sub">All your submitted artworks and their review status.</p></div>
+          <button class="btn btn-gold btn-sm" onclick="showTab('submit')">+ New Submission</button>
+        </div>
+        <div class="works-grid" id="myWorksGrid"><p style="color:var(--text-muted);font-style:italic">No works yet.</p></div>
+      </div>
+
+      <!-- Submit -->
+      <div class="tab-section" id="tab-submit">
+        <div class="page-header">
+          <h1 class="page-title">Submit <em>Your Work</em></h1>
+          <p class="page-sub">All submissions go through a review process before appearing in the gallery.</p>
+        </div>
+        <div style="max-width:560px">
+          <div class="upload-form" style="background:var(--card-bg);border:1px solid var(--glass-light);border-radius:var(--radius);padding:32px;backdrop-filter:blur(16px)">
+            <div class="form-group">
+              <label class="form-label">Artwork Title *</label>
+              <input class="form-input" type="text" id="workTitle2" placeholder="Give your work a compelling title">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Category *</label>
+              <select class="form-select" id="workCat2">
+                <option value="">Select a category</option>
+                <option value="digital">Digital Art</option>
+                <option value="photography">Photography</option>
+                <option value="3d">3D & Motion Graphics</option>
+                <option value="illustration">Illustration</option>
+                <option value="video">Video & Film</option>
+                <option value="interactive">Interactive Media</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Description</label>
+              <textarea class="form-textarea" id="workDesc2" placeholder="Describe your work, inspiration, and process…"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tags (comma separated)</label>
+              <input class="form-input" type="text" id="workTags2" placeholder="e.g. abstract, landscape, digital">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Upload Image *</label>
+              <div class="drop-zone" id="dropZone2" onclick="document.getElementById('fileInput2').click()">
+                <div class="icon">🖼️</div>
+                <p><strong>Click to upload</strong> or drag & drop</p>
+                <p style="font-size:.8rem;margin-top:4px">JPG, PNG, GIF, WebP · Max 20MB</p>
+                <input type="file" id="fileInput2" accept="image/*" onchange="handleFile2(this)">
+              </div>
+              <div class="preview-wrap" id="previewWrap2">
+                <img id="previewImg2" src="" alt="">
+                <p id="previewName2" style="font-size:.8rem;color:var(--text-muted);margin-top:6px"></p>
+              </div>
+            </div>
+            <div id="submitError" style="color:var(--danger);font-family:'Space Mono',monospace;font-size:.75rem;display:none"></div>
+            <button class="btn btn-gold" style="width:100%" onclick="submitWork2()">Submit for Review →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile -->
+      <div class="tab-section" id="tab-profile">
+        <div class="page-header">
+          <h1 class="page-title">My <em>Profile</em></h1>
+          <p class="page-sub">Update your artist profile information.</p>
+        </div>
+        <div class="profile-form">
+          <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" type="text" id="profName"></div>
+          <div class="form-group"><label class="form-label">Major</label>
+            <select class="form-select" id="profMajor">
+              <option value="">Select Major</option>
+              <option>Digital Art</option><option>Photography</option><option>3D & Motion Graphics</option>
+              <option>Illustration</option><option>Video & Film</option><option>Interactive Media</option>
+              <option>Graphic Design</option><option>Animation</option><option>Sound Design</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Year</label>
+            <select class="form-select" id="profYear">
+              <option value="">Select Year</option>
+              <option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option><option>Master</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Bio</label><textarea class="form-textarea" id="profBio" style="min-height:100px"></textarea></div>
+          <button class="btn btn-gold" onclick="saveProfile()">Save Changes</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+// Redirect if not logged in
+if (!isLoggedIn()) location.href = '/auth';
+let currentUser = getUser();
+let selectedFile = null, selectedFile2 = null;
+
+function showTab(name) {
+  document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('tab-'+name)?.classList.add('active');
+  document.querySelector(`.nav-item[data-tab="${name}"]`)?.classList.add('active');
+}
+
+function loadSidebar(u) {
+  document.getElementById('sidebarName').textContent = u.name;
+  document.getElementById('sidebarMajor').textContent = u.major||'Multimedia Arts';
+  document.getElementById('sidebarYear').textContent = u.year||'';
+}
+
+async function loadMyWorks() {
+  try {
+    const works = await apiFetch('/api/artworks/user/mine');
+    const total = works.length;
+    const pending = works.filter(w=>w.status==='pending').length;
+    const approved = works.filter(w=>w.status==='approved').length;
+    const likes = works.reduce((s,w)=>s+(w.likes||0),0);
+    document.getElementById('dsTotal').textContent = total;
+    document.getElementById('dsPending').textContent = pending;
+    document.getElementById('dsApproved').textContent = approved;
+    document.getElementById('dsLikes').textContent = likes;
+    renderWorks(works, 'overviewWorks');
+    renderWorks(works, 'myWorksGrid');
+  } catch(e){ console.error(e); }
+}
+
+function renderWorks(works, containerId) {
+  const grid = document.getElementById(containerId);
+  if (!works.length) { grid.innerHTML = '<p style="color:var(--text-muted);font-style:italic;grid-column:1/-1">No works submitted yet.</p>'; return; }
+  grid.innerHTML = '';
+  works.forEach(w => {
+    const card = document.createElement('div');
+    card.className = 'work-card';
+    const statusMap = { pending:'badge-gold', approved:'badge-green', rejected:'badge-red' };
+    card.innerHTML = `
+      ${w.image_url
+        ? `<img class="work-img" src="${w.image_url}" alt="${w.title}">`
+        : `<div class="work-img" style="overflow:hidden">${artSVG(w.id,300,160)}</div>`
+      }
+      <div class="work-body">
+        <div class="work-title">${w.title}</div>
+        <div class="work-meta">
+          <span class="badge ${statusMap[w.status]||'badge-gray'}">${w.status}</span>
+          <span style="font-size:.8rem;color:var(--text-muted)">♥ ${w.likes||0}</span>
+        </div>
+        <div class="work-actions">
+          <button class="btn btn-danger btn-sm" style="flex:1" onclick="deleteWork('${w.uuid}')">Delete</button>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+async function deleteWork(uuid) {
+  if (!confirm('Delete this artwork? This cannot be undone.')) return;
+  try {
+    await apiFetch('/api/artworks/'+uuid, {method:'DELETE'});
+    toast('Artwork deleted','success');
+    loadMyWorks();
+  } catch(e){ toast(e.message,'error'); }
+}
+
+function handleFile(input) {
+  const f = input.files[0]; if (!f) return;
+  selectedFile = f;
+  const preview = document.getElementById('previewImg');
+  const wrap = document.getElementById('previewWrap');
+  const name = document.getElementById('previewName');
+  preview.src = URL.createObjectURL(f);
+  name.textContent = f.name + ' · ' + (f.size/1024/1024).toFixed(2) + ' MB';
+  wrap.style.display = 'block';
+  document.getElementById('dropZone').style.display = 'none';
+}
+function handleFile2(input) {
+  const f = input.files[0]; if (!f) return;
+  selectedFile2 = f;
+  const preview = document.getElementById('previewImg2');
+  const wrap = document.getElementById('previewWrap2');
+  const name = document.getElementById('previewName2');
+  preview.src = URL.createObjectURL(f);
+  name.textContent = f.name + ' · ' + (f.size/1024/1024).toFixed(2) + ' MB';
+  wrap.style.display = 'block';
+  document.getElementById('dropZone2').style.display = 'none';
+}
+
+async function submitWork2() {
+  const title = document.getElementById('workTitle2').value.trim();
+  const category = document.getElementById('workCat2').value;
+  const description = document.getElementById('workDesc2').value.trim();
+  const tags = document.getElementById('workTags2').value.trim();
+  const errEl = document.getElementById('submitError');
+  errEl.style.display = 'none';
+  if (!title || !category) { errEl.textContent = 'Title and category are required'; errEl.style.display='block'; return; }
+  try {
+    const fd = new FormData();
+    fd.append('title', title);
+    fd.append('category', category);
+    fd.append('description', description);
+    fd.append('tags', tags);
+    if (selectedFile2) fd.append('image', selectedFile2);
+    await apiFetchForm('/api/artworks', fd);
+    toast('Work submitted! It is pending review.', 'success');
+    document.getElementById('workTitle2').value='';
+    document.getElementById('workCat2').value='';
+    document.getElementById('workDesc2').value='';
+    document.getElementById('workTags2').value='';
+    selectedFile2 = null;
+    document.getElementById('previewWrap2').style.display='none';
+    document.getElementById('dropZone2').style.display='block';
+    showTab('works');
+    loadMyWorks();
+  } catch(e) { errEl.textContent = e.message; errEl.style.display='block'; }
+}
+
+async function saveProfile() {
+  const name = document.getElementById('profName').value.trim();
+  const major = document.getElementById('profMajor').value;
+  const year = document.getElementById('profYear').value;
+  const bio = document.getElementById('profBio').value.trim();
+  try {
+    const user = await apiFetch('/api/auth/profile', {method:'PUT', body:JSON.stringify({name,major,year,bio})});
+    setAuth(getToken(), user);
+    currentUser = user;
+    loadSidebar(user);
+    toast('Profile updated!', 'success');
+  } catch(e){ toast(e.message,'error'); }
+}
+
+async function init() {
+  try {
+    const user = await apiFetch('/api/auth/me');
+    setAuth(getToken(), user);
+    currentUser = user;
+    loadSidebar(user);
+    document.getElementById('profName').value = user.name||'';
+    document.getElementById('profMajor').value = user.major||'';
+    document.getElementById('profYear').value = user.year||'';
+    document.getElementById('profBio').value = user.bio||'';
+    loadMyWorks();
+  } catch(e){ clearAuth(); location.href='/auth'; }
+}
+init();
+</script>
+</body>
+</html>
